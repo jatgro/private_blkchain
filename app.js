@@ -14,6 +14,10 @@ const bodyParser = require("body-parser");
  */
 const BlockChain = require("./src/blockchain.js");
 
+// using the dotenv library to access the .env variables 
+const dotenv = require('dotenv');
+dotenv.config();
+
 class ApplicationServer {
   constructor() {
     //Express application object
@@ -31,7 +35,7 @@ class ApplicationServer {
   }
 
   initExpress() {
-    this.app.set("port", 8000);
+    this.app.set("port", process.env.PORT);
   }
 
   initExpressMiddleWare() {
