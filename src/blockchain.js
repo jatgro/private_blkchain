@@ -68,8 +68,13 @@ class Blockchain {
         block.previousBlockHash = self.chain[self.chain.length - 1]
           ? self.chain[self.chain.length - 1].hash
           : null;
-        block.timestamp = new Date().getTime().toString().slice(0, -3);
+        block.time = new Date().getTime().toString().slice(0, -3);
         block.hash = await SHA256(JSON.stringify(block)).toString();
+       
+        if(!this.validateChain() === "no error found"){
+          throw new Error();
+        }
+
         this.chain = [...this.chain, block];
         this.height = this.chain.length - 1;
         resolve(block);
@@ -159,7 +164,7 @@ class Blockchain {
   getBlockByHeight(height) {
     let self = this;
     return new Promise((resolve, reject) => {
-      let block = self.chain.filter((p) => p.height === height)[0];
+      let block = self.chain.find((p) => p.height === height);
       if (block) {
         resolve(block);
       } else {
@@ -179,8 +184,8 @@ class Blockchain {
     let stars = [];
     return new Promise((resolve, reject) => {
       stars = self.chain.filter((block) => block.owner === address);
-      resolve(stars);
-    });
+      resolve(stars.map(star => star.getBData()));
+    }); 
   }
 
   /**
@@ -193,10 +198,10 @@ class Blockchain {
     let self = this;
     let errorLog = [];
     return new Promise(async (resolve, reject) => {
-      self.chain.forEach((block) => {
+      self.chain.forEach(async (block) => {
         try {
           if (
-            block.height <= 0 &&
+            block.height > 0 &&
             !block.previousBlockHash === self.chain[block.height - 1].hash
           ) {
             throw new Error(
@@ -204,7 +209,10 @@ class Blockchain {
             );
           }
 
-          block.validate();
+          const isBlockValid = await block.validate();
+          if(!isBlockValid){
+            throw new Error(false);
+          }
         } catch (e) {
           errorLog = [...errorLog, e];
         }

@@ -36,17 +36,19 @@ class Block {
    */
   validate() {
     let self = this;
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {  
       // Save in auxiliary variable the current block hash
-      const hash = this.hash;
+      const currentHash = self.hash;
+      self.hash = null;
+      let newHash = SHA256(JSON.stringify(self)).toString();
       // Recalculate the hash of the Block
-      const recalculatedHash = SHA256(self);
+      self.hash = currentHash;
       // Comparing if the hashes changed
       // Returning the Block is not valid
 
       // Returning the Block is valid
 
-      resolve(recalculatedHash === hash);
+      resolve(newHash === currentHash);
     });
   }
 
@@ -61,17 +63,21 @@ class Block {
    */
   getBData() {
     // Getting the encoded data saved in the Block
-    const data = this.body;
-    // Decoding the data to retrieve the JSON representation of the object
-    const decodedData = hex2ascii(data);
-    // Parse the data to an object to be retrieve.
-    // Resolve with the data if the object isn't the Genesis block
-    if (this.height !== 0) {
-      resolve(JSON.parse(decodedData));
-    } else {
-      reject("there was an error in getting the data");
-    }
+    return new Promise((resolve, reject) => {
+      
+      const data = this.body;
+      // Decoding the data to retrieve the JSON representation of the object
+      const decodedData = hex2ascii(data);
+      // Parse the data to an object to be retrieve.
+      // Resolve with the data if the object isn't the Genesis block
+      if (this.height !== 0) {
+        resolve(JSON.parse(decodedData));
+      } else {
+        reject("there was an error in getting the data");
+      }
+    
+    })
   }
-}
+  }
 
 module.exports.Block = Block; // Exposing the Block class as a module
