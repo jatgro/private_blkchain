@@ -70,12 +70,14 @@ class Blockchain {
           : null;
         block.time = new Date().getTime().toString().slice(0, -3);
         block.hash = await SHA256(JSON.stringify(block)).toString();
-       
-        if(!this.validateChain() === "no error found"){
+
+        let invalidBlocks = await this.validateChain();
+        if (invalidBlocks.length == 0) {
+          self.chain.push(block);
+        } else {
           throw new Error();
         }
 
-        this.chain = [...this.chain, block];
         this.height = this.chain.length - 1;
         resolve(block);
       } catch (e) {
@@ -129,7 +131,7 @@ class Blockchain {
       );
       try {
         if (
-          currentTime - timeFromMessage <= 300000 &&
+          currentTime - timeFromMessage <= 300 &&
           bitcoinMessage.verify(message, address, signature)
         ) {
           let block = new BlockClass.Block(star);
@@ -184,8 +186,10 @@ class Blockchain {
     let stars = [];
     return new Promise((resolve, reject) => {
       stars = self.chain.filter((block) => block.owner === address);
-      resolve(stars.map(star => star.getBData()));
-    }); 
+      resolve(
+        await(Promise.all(stars.map(async (star) => await star.getBData())))
+      );
+    });
   }
 
   /**
@@ -210,7 +214,7 @@ class Blockchain {
           }
 
           const isBlockValid = await block.validate();
-          if(!isBlockValid){
+          if (!isBlockValid) {
             throw new Error(false);
           }
         } catch (e) {
@@ -220,7 +224,7 @@ class Blockchain {
       if (errorLog.length > 0) {
         resolve(errorLog);
       } else {
-        resolve("no error found");
+        resolve([]);
       }
     });
   }
